@@ -23,14 +23,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @Slf4j
-class IntegrationTest extends BaseIntegrationTest {
+class ControllerTest extends BaseIntegrationTest {
 
     @MockBean
     private UserService userService;
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final UserRequest userRequest = new UserRequest("user",
+    private final UserRequest userRequest = new UserRequest("username",
             "user@mail.com",
             "password",
             "firstName",
@@ -55,7 +55,6 @@ class IntegrationTest extends BaseIntegrationTest {
     void getUserById() throws Exception {
         UUID userId = UUID.randomUUID();
         Mockito.when(userService.getUserById(userId)).thenReturn(userResponse);
-
         mvc.perform(get("/api/users/" + userId))
                 .andExpect(status().isOk());
         verify(userService,times(1)).getUserById(userId);
@@ -66,5 +65,27 @@ class IntegrationTest extends BaseIntegrationTest {
     void hello() throws Exception {
         mvc.perform(get("/api/users/hello"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void createNegative() throws Exception {
+        mvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userRequest)))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void getUserByIdNegative() throws Exception {
+        UUID userId = UUID.randomUUID();
+        Mockito.when(userService.getUserById(userId)).thenReturn(userResponse);
+        mvc.perform(get("/api/users/" + userId))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void helloNegative() throws Exception {
+        mvc.perform(get("/api/users/hello"))
+                .andExpect(status().is4xxClientError());
     }
 }
